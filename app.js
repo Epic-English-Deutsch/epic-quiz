@@ -6,7 +6,7 @@
   var ADMIN_PASSWORD = "0609";
   /* Supabase (user's project). Key stays empty until provided — the app then falls back to localStorage only. */
   var SUPABASE_URL = "https://vxvhushnspkxalabzzjv.supabase.co";
-  var SUPABASE_ANON_KEY = "";
+  var SUPABASE_ANON_KEY = "sb_publishable_GLCgN5quF_6M78erMw9y0A_Bj1Xyr-h";
   var SUPABASE_TABLE = "quiz_results";
   var KEYS = {
     records: "eq_records_v1",
