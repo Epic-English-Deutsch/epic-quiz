@@ -55,7 +55,7 @@ QUIZ_DATA.items.push(
     "Living Longer, Living More Deliberately"
   ],
   answer: 0,
-  why: "글의 핵심은 우리 행동 대부분이 과거에 정해진 ‘기본 설정(default)’대로 자동 처리되며, 그 자동화가 없으면 복잡한 삶을 감당할 수 없다는 것입니다. 따라서 기본 설정의 가치를 긍정적으로 다룬 ①이 제목으로 적절합니다."
+  why: "글의 핵심은 우리 행동 대부분이 과거에 정해진 ‘기본 설정(default)’대로 자동 처리되며, 그 자동화가 없으면 복잡한 삶을 감당할 수 없다는 것입니다. 따라서 기본 설정의 가치를 긍정적으로 다룬 ‘The Default Settings That Make a Complex Life Possible’이 제목으로 적절합니다."
 },
 {
   id: "m32", cat: "multiple", no: "32", num: 32,
@@ -93,7 +93,7 @@ QUIZ_DATA.items.push(
     "Passive Recipients: The Nature of Human Growth"
   ],
   answer: 0,
-  why: "가소성(plasticity) 개념을 통해 발달이 전 생애에 걸쳐 계속되는 과정임을 강조하는 글입니다. ②와 ③은 글이 비판하는 옛 관점이고, ⑤는 글에서 부정하는 표현입니다."
+  why: "가소성(plasticity) 개념을 통해 발달이 전 생애에 걸쳐 계속되는 과정임을 강조하는 글입니다. ‘Childhood: The Only Window for Growth’와 ‘Old Age as a Phase of Inevitable Decline’은 글이 비판하는 옛 관점이고, ‘Passive Recipients’는 글에서 부정하는 표현입니다."
 },
 {
   id: "m34", cat: "multiple", no: "34", num: 34,
@@ -112,7 +112,7 @@ QUIZ_DATA.items.push(
     "Predicting the Future of Digital Networks"
   ],
   answer: 0,
-  why: "정보기술로 기관과 시스템이 서로 연결되면서 작은 오류의 영향이 즉시 퍼져 복합적 실패가 예측하기 어려워졌다는 것이 주제입니다. ④는 ‘영원히 분리되어야 한다’는 과장된 진술로 글의 주장이 아닙니다."
+  why: "정보기술로 기관과 시스템이 서로 연결되면서 작은 오류의 영향이 즉시 퍼져 복합적 실패가 예측하기 어려워졌다는 것이 주제입니다. ‘Institutions Should Remain Separate Forever’처럼 ‘영원히 분리되어야 한다’는 과장된 진술은 글의 주장이 아닙니다."
 },
 {
   id: "m35", cat: "multiple", no: "35", num: 35,

@@ -17,7 +17,7 @@ QUIZ_DATA.items.push(
     "hunter-gatherers would have lived longer than farmers"
   ],
   answer: 0,
-  why: "앞 문장까지 ‘인류는 오랫동안 매우 높은 사망률로 인구가 늘지 못했다’고 했습니다. 「Had it been otherwise(그렇지 않았다면)」는 그 사실의 반대, 즉 사망률이 낮았다면 인구가 훨씬 일찍 폭발적으로 늘었을 것이라는 의미이므로 ①이 적절합니다."
+  why: "앞 문장까지 ‘인류는 오랫동안 매우 높은 사망률로 인구가 늘지 못했다’고 했습니다. 「Had it been otherwise(그렇지 않았다면)」는 그 사실의 반대, 즉 사망률이 낮았다면 인구가 훨씬 일찍 폭발적으로 늘었을 것이라는 의미이므로 ‘인구의 거대한 최근 증가가 훨씬 더 일찍 일어났을 것’이라는 내용이 적절합니다."
 },
 {
   id: "c30", cat: "cloze", no: "30", num: 30,
@@ -36,7 +36,7 @@ QUIZ_DATA.items.push(
     "since people rarely notice other people’s facial expressions"
   ],
   answer: 0,
-  why: "바로 뒤에서 “사람들이 비언어적 메시지를 더 신뢰하기 때문”이라고 이유를 밝히고 있습니다. 따라서 말로 상대를 조종하려는 시도는 ‘동반되는 비언어적 메시지가 말과 일치하지 않을 때’ 실패한다는 ①이 적절합니다."
+  why: "바로 뒤에서 “사람들이 비언어적 메시지를 더 신뢰하기 때문”이라고 이유를 밝히고 있습니다. 따라서 말로 상대를 조종하려는 시도는 ‘동반되는 비언어적 메시지가 말과 일치하지 않을 때’ 실패한다는 진술이 적절합니다."
 },
 {
   id: "c31", cat: "cloze", no: "31", num: 31,
@@ -55,7 +55,7 @@ QUIZ_DATA.items.push(
     "capable of replacing default behaviour in most situations"
   ],
   answer: 0,
-  why: "의식적으로 모든 것을 결정하려 하면 침대에서조차 나올 수 없다는 예시가 이어지고, 뒤에서 ‘자동화가 없으면 복잡한 삶을 감당할 수 없다’고 말합니다. 따라서 의식적 사고(숙고하는 마음)는 ‘실시간으로 인생 전체를 운영하기에 너무 느리고 비용이 많이 든다’는 ①이 적절합니다."
+  why: "의식적으로 모든 것을 결정하려 하면 침대에서조차 나올 수 없다는 예시가 이어지고, 뒤에서 ‘자동화가 없으면 복잡한 삶을 감당할 수 없다’고 말합니다. 따라서 의식적 사고(숙고하는 마음)는 ‘실시간으로 인생 전체를 운영하기에 너무 느리고 비용이 많이 든다’는 설명이 적절합니다."
 },
 {
   id: "c32", cat: "cloze", no: "32", num: 32,
@@ -74,7 +74,7 @@ QUIZ_DATA.items.push(
     "as long as the trial is broadcast live to everyone"
   ],
   answer: 0,
-  why: "앞에서 SNS로 사법 판단에 압력을 넣는 관행을 문제 삼았고, 바로 뒤에서 “오늘날 공적 광장은 가상의 차원, 즉 소셜 네트워크로 바뀌었다”는 설명이 이어져야 자연스럽습니다. 따라서 ①이 적절합니다."
+  why: "앞에서 SNS로 사법 판단에 압력을 넣는 관행을 문제 삼았고, 바로 뒤에서 “오늘날 공적 광장은 가상의 차원, 즉 소셜 네트워크로 바뀌었다”는 설명이 이어져야 자연스럽습니다. 따라서 ‘오늘날 공적 광장은 가상의 차원, 즉 소셜 네트워크로 바뀌었다’는 관계사절이 이어지는 것이 적절합니다."
 },
 {
   id: "c33", cat: "cloze", no: "33", num: 33,
@@ -93,7 +93,7 @@ QUIZ_DATA.items.push(
     "stability is the final goal of human development"
   ],
   answer: 0,
-  why: "Although(양보) 이후에는 앞의 ‘발달은 전 생애에 걸쳐 계속된다’는 논지를 뒷받침하는 내용이 와야 합니다. 변화의 정도는 단계마다 다를 수 있지만 ‘인생의 모든 단계가 적응과 변화의 여지를 남긴다’는 ①이 적절합니다."
+  why: "Although(양보) 이후에는 앞의 ‘발달은 전 생애에 걸쳐 계속된다’는 논지를 뒷받침하는 내용이 와야 합니다. 변화의 정도는 단계마다 다를 수 있지만 ‘인생의 모든 단계가 적응과 변화의 여지를 남긴다’는 진술이 적절합니다."
 },
 {
   id: "c34", cat: "cloze", no: "34", num: 34,
@@ -112,7 +112,7 @@ QUIZ_DATA.items.push(
     "each institution becomes buffered from outside mistakes"
   ],
   answer: 0,
-  why: "상호 의존이 복합적 실패의 온상이라는 진술에 이어지는 인용문입니다. 과거에 분리되어 있던 것들이 서로 부딪히면 ‘다음에 무슨 일이 일어날지 예측하기가 훨씬 어려워진다’는 ①이 문맥에 맞습니다."
+  why: "상호 의존이 복합적 실패의 온상이라는 진술에 이어지는 인용문입니다. 과거에 분리되어 있던 것들이 서로 부딪히면 ‘다음에 무슨 일이 일어날지 예측하기가 훨씬 어려워진다’는 진술이 문맥에 맞습니다."
 },
 {
   id: "c35", cat: "cloze", no: "35", num: 35,
@@ -131,7 +131,7 @@ QUIZ_DATA.items.push(
     "have lowered the average human life expectancy"
   ],
   answer: 0,
-  why: "백신의 기여를 설명하는 문장입니다. have contributed ~ and have even ___로 병렬을 이루며, 세균성·바이러스성 질병 부담 감소에서 나아가 ‘폭스바이러스의 박멸까지 이끌었다’는 ①이 적절합니다."
+  why: "백신의 기여를 설명하는 문장입니다. have contributed ~ and have even ___로 병렬을 이루며, 세균성·바이러스성 질병 부담 감소에서 나아가 ‘폭스바이러스의 박멸까지 이끌었다’는 내용이 적절합니다."
 },
 {
   id: "c36", cat: "cloze", no: "36", num: 36,
@@ -150,7 +150,7 @@ QUIZ_DATA.items.push(
     "to compare competing products currently on the market"
   ],
   answer: 0,
-  why: "사용성 테스트의 목적을 설명하는 문장입니다. 참가자들이 실제와 유사한 활동을 하게 함으로써 디자인의 문제점을 발견하고 사용자의 행동과 선호를 알아보는 것이 목적이므로 ①이 적절합니다."
+  why: "사용성 테스트의 목적을 설명하는 문장입니다. 참가자들이 실제와 유사한 활동을 하게 함으로써 디자인의 문제점을 발견하고 사용자의 행동과 선호를 알아보는 것이 목적이므로 ‘디자인의 문제점을 발견하고 사용자의 행동과 선호를 알아보는 것’이 적절합니다."
 },
 {
   id: "c37", cat: "cloze", no: "37", num: 37,
@@ -169,7 +169,7 @@ QUIZ_DATA.items.push(
     "it permanently changes how people think about marriage"
   ],
   answer: 0,
-  why: "이어지는 문장에서 “One might view it as ~. Alternatively, one might see it as ~.”라며 두 가지 서로 다른 해석을 제시하므로, 이혼이라는 사건도 ‘여러 방식으로 해석될 수 있다’는 ①이 적절합니다."
+  why: "이어지는 문장에서 “One might view it as ~. Alternatively, one might see it as ~.”라며 두 가지 서로 다른 해석을 제시하므로, 이혼이라는 사건도 ‘여러 방식으로 해석될 수 있다’는 진술이 적절합니다."
 },
 {
   id: "c38", cat: "cloze", no: "38", num: 38,
@@ -188,7 +188,7 @@ QUIZ_DATA.items.push(
     "should not be used for industrial purposes at all"
   ],
   answer: 0,
-  why: "용도에 따라 기준이 다르다는 주장을 뒷받침하는 예시입니다. 냉각용수는 식수만큼 깨끗할 필요가 없다는 ①이 와야 뒤의 ‘용도에 따라 다른 안전 한도를 정한다’는 결론과 이어집니다."
+  why: "용도에 따라 기준이 다르다는 주장을 뒷받침하는 예시입니다. 냉각용수는 식수만큼 깨끗할 필요가 없다는 내용이 와야 뒤의 ‘용도에 따라 다른 안전 한도를 정한다’는 결론과 이어집니다."
 },
 {
   id: "c39", cat: "cloze", no: "39", num: 39,
@@ -207,7 +207,7 @@ QUIZ_DATA.items.push(
     "they avoid archives altogether"
   ],
   answer: 0,
-  why: "「rather than A, B(A가 아니라 B)」 구문이므로 A(액면 그대로 받아들이는 것)의 반대 행동이 와야 합니다. 이어지는 예시(노예 소유주가 제공한 ‘사실’뿐 아니라 침묵·중단·소문까지 살핌)가 ‘결을 거슬러 읽기’에 해당하므로 ①이 적절합니다."
+  why: "「rather than A, B(A가 아니라 B)」 구문이므로 A(액면 그대로 받아들이는 것)의 반대 행동이 와야 합니다. 이어지는 예시(노예 소유주가 제공한 ‘사실’뿐 아니라 침묵·중단·소문까지 살핌)가 ‘결을 거슬러 읽기’에 해당하는 표현이 적절합니다."
 },
 {
   id: "c40", cat: "cloze", no: "40", num: 40,
@@ -226,7 +226,7 @@ QUIZ_DATA.items.push(
     "has little effect on how dolphins respond to their environment"
   ],
   answer: 0,
-  why: "글의 결론 문장입니다. 병렬 처리는 인지 부담을 줄여 돌고래가 환경 변화에 빠르게 반응하게 한다는 ①이 앞의 ‘공장 조립 라인’ 비유와 연결됩니다. ③은 병렬 처리와 정반대입니다."
+  why: "글의 결론 문장입니다. 병렬 처리는 인지 부담을 줄여 돌고래가 환경 변화에 빠르게 반응하게 한다는 진술이 앞의 ‘공장 조립 라인’ 비유와 연결됩니다. ‘순차적으로 처리한다’는 선택지는 병렬 처리와 정반대입니다."
 },
 {
   id: "c41", cat: "cloze", no: "41", num: 41,
@@ -245,7 +245,7 @@ QUIZ_DATA.items.push(
     "showing that idle time is nothing but wasted time"
   ],
   answer: 0,
-  why: "지루함을 ‘사치’이자 기회로 재해석하는 문맥입니다. 안전하고 활동이 없는 상황에서 나타나는 지루함이 환경을 감상하고 이해할 기회를 ‘제공한다’는 ①이 적절합니다. ②는 의미가 반대입니다."
+  why: "지루함을 ‘사치’이자 기회로 재해석하는 문맥입니다. 안전하고 활동이 없는 상황에서 나타나는 지루함이 환경을 감상하고 이해할 기회를 ‘제공한다’는 내용이 적절합니다. ‘기회를 없앤다’는 선택지는 의미가 반대입니다."
 },
 {
   id: "c42", cat: "cloze", no: "42", num: 42,
@@ -263,6 +263,6 @@ QUIZ_DATA.items.push(
     "we should consider it a dangerous form of indulgence"
   ],
   answer: 0,
-  why: "「Rather than viewing A as B(A를 B로 보기보다는)」 구문으로, ‘비생산적’이라는 시각의 반대가 와야 합니다. 지루함을 자기계발과 건설적 사색의 기회로 보아야 한다는 ①이 글 전체의 논지와 일치합니다."
+  why: "「Rather than viewing A as B(A를 B로 보기보다는)」 구문으로, ‘비생산적’이라는 시각의 반대가 와야 합니다. 지루함을 자기계발과 건설적 사색의 기회로 보아야 한다는 진술이 글 전체의 논지와 일치합니다."
 }
 );

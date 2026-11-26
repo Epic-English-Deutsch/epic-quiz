@@ -338,7 +338,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   #printRoot .p-pass{font-size:10pt;line-height:1.62;text-align:justify}
   #printRoot .p-pass p{margin:0 0 5px}
   #printRoot .p-choices{margin:6px 0 0;padding-left:2px;font-size:9.8pt}
-  #printRoot .p-choices span{display:inline-block;margin-right:10px}
+  #printRoot .p-choices span{display:block;margin:0 0 1px 0}
   #printRoot .p-blank{display:inline-block;min-width:70px;border-bottom:1px solid #000}
   #printRoot .p-opt{padding:0 2px}
   #printRoot .p-opt.right{font-weight:800;text-decoration:underline}
