@@ -672,8 +672,21 @@
     }
 
     var items = printScopeItems();
-    var parts = items.map(function (it) { return printItem(it, mode === "key"); }).join("");
-    var keyTable = mode === "key" ? answerTable(items) : "";
+    var withKey = mode === "key";
+    var sel = $("#printScope");
+    var isAll = !sel || sel.value === "all";
+    var parts = "";
+    if (isAll) {
+      ["grammar", "multiple", "cloze"].forEach(function (cid) {
+        var group = items.filter(function (it) { return it.cat === cid; });
+        if (!group.length) return;
+        parts += '<h2 class="p-sec">' + esc(catMeta(cid).name) + "</h2>" +
+          group.map(function (it) { return printItem(it, withKey); }).join("");
+      });
+    } else {
+      parts = items.map(function (it) { return printItem(it, withKey); }).join("");
+    }
+    var keyTable = withKey ? answerTable(items) : "";
     root.innerHTML = '<div class="p-doc">' + head + keyTable + parts +
       '<div class="p-foot">EPIC QUIZ · ' + esc(meta.source || "") + "</div></div>";
   }
@@ -720,15 +733,22 @@
   }
 
   function answerTable(items) {
-    var cells = [];
-    items.forEach(function (it) {
-      if (it.cat === "grammar") {
-        it.blanks.forEach(function (b) { cells.push(esc(it.no) + "(" + b.n + ") " + esc(b.opts[b.answer])); });
-      } else {
-        cells.push(esc(it.no) + " " + CIRCLE[it.answer]);
-      }
+    var blocks = "";
+    ["grammar", "multiple", "cloze"].forEach(function (cid) {
+      var group = items.filter(function (it) { return it.cat === cid; });
+      if (!group.length) return;
+      var cells = [];
+      group.forEach(function (it) {
+        if (it.cat === "grammar") {
+          it.blanks.forEach(function (b) { cells.push(esc(it.no) + "(" + b.n + ") " + esc(b.opts[b.answer])); });
+        } else {
+          cells.push(esc(it.no) + " " + CIRCLE[it.answer]);
+        }
+      });
+      blocks += '<div class="p-key"><b>정답표 · ' + esc(catMeta(cid).name) + "</b>" +
+        cells.map(function (c) { return "<span>" + c + "</span>"; }).join("") + "</div>";
     });
-    return '<div class="p-key"><b>정답표</b>' + cells.map(function (c) { return "<span>" + c + "</span>"; }).join("") + "</div>";
+    return blocks;
   }
 
   function reportBody() {
