@@ -385,11 +385,18 @@
     var foot = "";
     if (mode === "solve") {
       var done = unitsAnswered(item), tot = unitsOf(item).length;
-      foot = '<div class="item-foot"><span class="hint">' +
-        (item.cat === "grammar"
-          ? "빈칸 " + tot + "개 중 " + done + "개 선택"
-          : (state.answers[unitsOf(item)[0].key] != null ? "선택 완료" : "보기를 선택하세요")) +
-        "</span></div>";
+      var hint;
+      if (item.cat === "grammar") {
+        if (state.retry) {
+          var left = unitsOf(item).filter(function (u) { return state.retryKeys && state.retryKeys[u.key] && state.answers[u.key] == null; }).length;
+          hint = "다시 볼 빈칸 " + left + "개 · 이미 맞힌 빈칸은 잠김";
+        } else {
+          hint = "빈칸 " + tot + "개 중 " + done + "개 선택";
+        }
+      } else {
+        hint = state.answers[unitsOf(item)[0].key] != null ? "선택 완료" : "보기를 선택하세요";
+      }
+      foot = '<div class="item-foot"><span class="hint">' + hint + "</span></div>";
     }
     return '<article class="item">' + body + foot + "</article>";
   }
@@ -679,10 +686,10 @@
       if (item.cat === "grammar") {
         t = t.replace(/\{\{(\d+)\}\}/g, function (_, n) {
           var b = item.blanks.filter(function (x) { return x.n === Number(n); })[0];
-          return ' <span class="p-opt">' + b.opts.map(function (o, i) {
+          return ' <span class="p-opt">(' + n + ") " + b.opts.map(function (o, i) {
             var isRight = withKey && i === b.answer;
             return '<span class="p-opt' + (isRight ? " right" : "") + '">' + esc(o) + "</span>";
-          }).join("<span> / </span>") + "</span> ";
+          }).join(" / ") + "</span> ";
         });
       } else {
         t = t.replace(/\{\{B\}\}/g, '<span class="p-blank"></span>');
