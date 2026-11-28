@@ -12,7 +12,8 @@
     records: "epic_quiz_csat2026_records_v1",
     name: "epic_quiz_csat2026_name_v1",
     supa: "epic_quiz_csat2026_supa_v1",
-    adminOk: "epic_quiz_csat2026_admin_ok"
+    adminOk: "epic_quiz_csat2026_admin_ok",
+    draft: "epic_quiz_csat2026_draft_v1"
   };
   /* Supabase quiz_results 행에서 이 사이트(2026 수능 홀수형) 기록임을 구분하는 값 */
   var EXAM_TAG = "2026_csat_odd";
@@ -159,6 +160,144 @@
     saveRecords(arr);
     supaPush(rec);
   }
+  /* ---------- draft: auto-save answers in progress ---------- */
+  function draftKeyOk(key) {
+    return typeof key === "string" && key.indexOf("#") > 0 && !!ITEMS[key.split("#")[0]];
+  }
+  function cleanAnswers(obj) {
+    var out = {};
+    if (!obj) return out;
+    Object.keys(obj).forEach(function (k) {
+      var v = obj[k];
+      if (v != null && draftKeyOk(k)) out[k] = v;
+    });
+    return out;
+  }
+  function loadDraft() {
+    var d;
+    try {
+      var raw = localStorage.getItem(KEYS.draft);
+      if (!raw) return null;
+      d = JSON.parse(raw);
+    } catch (e) { return null; }
+    if (!d || !d.cat) return null;
+    var catOk = DATA.categories.some(function (c) { return c.id === d.cat; });
+    if (!catOk) return null;
+    var answers = cleanAnswers(d.answers);
+    if (!Object.keys(answers).length) return null;
+    var ids = (Array.isArray(d.ids) ? d.ids : []).filter(function (id) {
+      return !!ITEMS[id] && ITEMS[id].cat === d.cat;
+    });
+    if (!ids.length) ids = itemsByCat(d.cat).map(function (it) { return it.id; });
+    var idx = Math.round(Number(d.idx) || 0);
+    if (idx < 0) idx = 0;
+    if (idx > ids.length - 1) idx = ids.length - 1;
+    var retry = !!d.retry;
+    var rk = (d.retryLock && d.retryLock.keys) || d.retryKeys;
+    var retryKeys = null;
+    if (retry) {
+      retryKeys = {};
+      if (rk && typeof rk === "object") {
+        Object.keys(rk).forEach(function (k) { if (draftKeyOk(k)) retryKeys[k] = true; });
+      }
+      if (!Object.keys(retryKeys).length) {
+        ids.forEach(function (id) {
+          unitsOf(ITEMS[id]).forEach(function (u) { if (answers[u.key] == null) retryKeys[u.key] = true; });
+        });
+      }
+      if (!Object.keys(retryKeys).length) retry = false;
+    }
+    var locked = cleanAnswers(d.retryLock && d.retryLock.locked);
+    var origin = d.retryOriginScore;
+    if (origin && typeof origin === "object") {
+      origin = { correct: Number(origin.correct) || 0, total: Number(origin.total) || 0, pct: Number(origin.pct) || 0 };
+    } else {
+      origin = null;
+    }
+    return {
+      v: 1,
+      cat: d.cat,
+      ids: ids,
+      idx: idx,
+      answers: answers,
+      retry: retry,
+      retryKeys: retryKeys,
+      locked: locked,
+      retryOriginScore: origin,
+      name: typeof d.name === "string" ? d.name : "",
+      elapsed: Math.max(0, Number(d.elapsed) || 0),
+      updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : ""
+    };
+  }
+  function saveDraft() {
+    if (state.view !== "quiz" || !state.cat || !state.ids.length) return;
+    var answers = cleanAnswers(state.answers);
+    if (!Object.keys(answers).length) { clearDraft(); return; }
+    var retryKeys = null;
+    var locked = {};
+    if (state.retry && state.retryKeys) {
+      retryKeys = {};
+      Object.keys(state.retryKeys).forEach(function (k) { if (draftKeyOk(k)) retryKeys[k] = true; });
+      locked = cleanAnswers(state.locked);
+    }
+    var d = {
+      v: 1,
+      cat: state.cat,
+      ids: state.ids.slice(),
+      idx: state.idx,
+      answers: answers,
+      retry: !!state.retry,
+      retryLock: { keys: retryKeys, locked: locked },
+      retryOriginScore: state.retryOriginScore || null,
+      name: state.name || "",
+      elapsed: Math.round(state.elapsed || 0),
+      updatedAt: new Date().toISOString()
+    };
+    try { localStorage.setItem(KEYS.draft, JSON.stringify(d)); } catch (e) { return; }
+    state.draft = d;
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(KEYS.draft); } catch (e) {}
+    state.draft = null;
+  }
+  function restoreDraft(d) {
+    if (!d || !d.cat || !d.ids || !d.ids.length) return;
+    state.cat = d.cat;
+    state.ids = d.ids.slice();
+    state.idx = d.idx;
+    state.answers = d.answers;
+    state.retry = !!d.retry;
+    state.retryKeys = d.retry ? d.retryKeys : null;
+    state.locked = d.locked || {};
+    state.retryOriginScore = d.retryOriginScore || null;
+    state.result = null;
+    if (d.name) state.name = d.name;
+    state.draft = d;
+    state.view = "quiz";
+    window.scrollTo(0, 0);
+    startTimer(d.elapsed);
+    render();
+    toast("이전에 풀던 답안을 불러왔습니다 (" + Object.keys(d.answers).length + "개)");
+  }
+  function draftBannerHTML() {
+    var d = state.draft;
+    if (!d || !d.cat) return "";
+    var n = Object.keys(cleanAnswers(d.answers)).length;
+    if (!n) return "";
+    var dc = catMeta(d.cat);
+    var label = dc.name + " · " + n + "개 답변 저장됨";
+    return '<section class="card pad" style="margin-top:14px;border:1.5px solid #a5b4fc;background:#eef2ff">' +
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+        '<div style="flex:1;min-width:160px">' +
+          '<div style="font-weight:800;color:#3730a3;font-size:15px">저장된 답안이 있습니다</div>' +
+          '<div style="font-size:13px;color:#475569;margin-top:3px">' + esc(label) +
+            (d.retry ? " · 오답 재풀이" : "") + (d.updatedAt ? " · " + esc(fmtDate(d.updatedAt)) : "") + "</div>" +
+        "</div>" +
+        '<button class="btn primary" data-act="resume">이어서 풀기 (' + esc(label) + ')</button>' +
+        '<button class="btn ghost" data-act="discard-draft">지우기</button>' +
+      "</div></section>";
+  }
+
   function getSupa() {
     var saved = {};
     try { saved = JSON.parse(localStorage.getItem(KEYS.supa) || "{}") || {}; } catch (e) { saved = {}; }
@@ -276,6 +415,8 @@
     locked: {},
     retryKeys: null,
     retry: false,
+    retryOriginScore: null,
+    draft: null,
     t0: 0,
     elapsed: 0,
     result: null,
@@ -283,10 +424,11 @@
   };
   var timerId = null;
 
-  function startTimer() {
+  function startTimer(baseSec) {
     stopTimer();
-    state.t0 = Date.now();
-    state.elapsed = 0;
+    var base = Math.max(0, Number(baseSec) || 0);
+    state.t0 = Date.now() - base * 1000;
+    state.elapsed = base;
     timerId = setInterval(function () {
       state.elapsed = (Date.now() - state.t0) / 1000;
       var el = $("#clock");
@@ -311,6 +453,7 @@
 
   function viewLogin() {
     var m = DATA.meta || {};
+    var draftHTML = draftBannerHTML();
     var cats = DATA.categories.map(function (c) {
       var n = itemsByCat(c.id).length;
       return '<button class="cat" data-act="pick-cat" data-cat="' + c.id + '" aria-pressed="' + (state.cat === c.id) + '">' +
@@ -324,6 +467,7 @@
         "<h1>" + esc(m.subject || "영어 변형문제") + "</h1>" +
         "<p>" + esc((m.range || "29~42번") + " 지문으로 만든 어법·독해 변형문제") + "</p>" +
       "</section>" +
+      draftHTML +
       '<section class="card pad" style="margin-top:18px">' +
         '<div class="field"><label for="nm">학생 이름</label>' +
           '<input id="nm" class="input" type="text" maxlength="20" placeholder="이름을 입력하세요" value="' + esc(state.name) + '" autocomplete="off"></div>' +
@@ -348,7 +492,8 @@
       '<div class="quiz-top">' +
         '<div class="row"><div class="cat-name"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:' + cat.color + '"></span>' + esc(cat.name) +
           (state.retry ? ' <span class="chip no">오답 재풀이</span>' : "") + "</div>" +
-          '<div class="count"><b>' + (state.idx + 1) + "</b> / " + total + " · <span id=\"clock\">" + fmtTime(state.elapsed) + "</span></div></div>" +
+          '<div class="count"><b>' + (state.idx + 1) + "</b> / " + total + " · <span id=\"clock\">" + fmtTime(state.elapsed) + "</span></div>" +
+          '<button class="btn ghost" data-act="home" title="답안은 자동 저장됩니다" style="padding:4px 10px;font-size:12px;line-height:1.2">처음으로</button></div>' +
         '<div class="bar"><i style="width:' + Math.max(3, pct) + '%"></i></div>' +
       "</div>" +
       itemHTML(item, "solve") +
@@ -492,6 +637,7 @@
       var go = window.confirm("아직 풀지 않은 문항이 " + unanswered + "개 있습니다. 그래도 채점할까요?");
       if (!go) return;
     }
+    clearDraft();
     stopTimer();
     var rec = {
       id: uid(),
@@ -572,8 +718,10 @@
 
   /* ---------- quiz flow ---------- */
   function startQuiz(cat) {
+    clearDraft();
     state.cat = cat;
     state.retry = false;
+    state.retryOriginScore = null;
     state.result = null;
     state.ids = itemsByCat(cat).map(function (it) { return it.id; });
     state.retryKeys = null;
@@ -589,6 +737,7 @@
   function retryWrong() {
     var r = state.result;
     if (!r) return;
+    state.retryOriginScore = { correct: r.correct, total: r.total, pct: r.pct };
     var wrongKeys = r.units.filter(function (u) { return !u.ok; }).map(function (u) { return u.key; });
     var ids = [];
     r.units.forEach(function (u) { if (u.i && ids.indexOf(u.i) < 0) ids.push(u.i); });
@@ -616,7 +765,9 @@
     state.view = "quiz";
     window.scrollTo(0, 0);
     startTimer();
+    saveDraft();
     render();
+    if (state.retryOriginScore) toast("오답 재풀이를 시작합니다. 이전 " + state.retryOriginScore.correct + "/" + state.retryOriginScore.total);
   }
 
   /* ---------- palette ---------- */
@@ -975,6 +1126,12 @@
         if (!state.name) { toast("이름을 입력해 주세요."); var i = $("#nm"); if (i) i.focus(); return; }
         try { localStorage.setItem(KEYS.name, state.name); } catch (err) {}
         if (!state.cat) { toast("문제 유형을 선택해 주세요."); return; }
+        if (state.draft && Object.keys(cleanAnswers(state.draft.answers)).length) {
+          if (!window.confirm("저장된 답안이 있습니다. 새로 시작하면 저장된 답안이 지워집니다. 새로 시작할까요?")) {
+            toast("위의 ‘이어서 풀기’를 누르면 저장된 답안으로 이어집니다.");
+            return;
+          }
+        }
         startQuiz(state.cat);
         break;
       case "pick":
@@ -983,16 +1140,18 @@
         var idx = Number(t.getAttribute("data-i"));
         if (state.locked[unit]) return;
         state.answers[unit] = (state.answers[unit] === idx) ? undefined : idx;
+        saveDraft();
         render();
         break;
       case "next":
-        if (state.idx < state.ids.length - 1) { state.idx++; window.scrollTo(0, 0); render(); }
+        if (state.idx < state.ids.length - 1) { state.idx++; saveDraft(); window.scrollTo(0, 0); render(); }
         break;
       case "prev":
-        if (state.idx > 0) { state.idx--; window.scrollTo(0, 0); render(); }
+        if (state.idx > 0) { state.idx--; saveDraft(); window.scrollTo(0, 0); render(); }
         break;
       case "jump":
         state.idx = Number(t.getAttribute("data-i"));
+        saveDraft();
         $("#modalRoot").innerHTML = "";
         window.scrollTo(0, 0);
         render();
@@ -1009,11 +1168,22 @@
       case "retry-wrong":
         retryWrong();
         break;
+      case "resume":
+        if (state.draft) restoreDraft(state.draft);
+        break;
+      case "discard-draft":
+        if (window.confirm("저장된 답안을 지울까요? 되돌릴 수 없습니다.")) {
+          clearDraft();
+          render();
+          toast("저장된 답안을 지웠습니다.");
+        }
+        break;
       case "retry-all":
         startQuiz(state.cat);
         break;
       case "home":
         stopTimer();
+        saveDraft();
         state.view = "login";
         state.result = null;
         state.retry = false;
@@ -1097,6 +1267,8 @@
       return;
     }
     if (state.cat == null) state.cat = "grammar";
+    var d = loadDraft();
+    if (d) { restoreDraft(d); return; }
     render();
   }
   document.addEventListener("DOMContentLoaded", init);
