@@ -24,6 +24,7 @@ QUIZ_DATA.items.push(
   title: "상황 윤리와 경기장의 규칙",
   type: "어휘",
   instruction: "다음 글의 밑줄 친 (a)~(e) 중에서 문맥상 낱말의 쓰임이 적절하지 않은 것은?",
+  fixed: true,
   paragraphs: [
     "Situational ethics is an ethical theory that takes into account the context of a situation or an act when judging whether it is ethical. Supporters of this theory willingly permit casting aside [[a]]absolute[[/a]] moral standards. In the absence of a universal standard or law, what matters is the outcome or consequences; so, the end [[b]]justifies[[/b]] the means.",
     "Possibly the following contrasting realities can help illustrate the application of situational ethics. In a pickup game of basketball played among friends, everyone is expected to call his or her own fouls or acknowledge knocking the ball out-of-bounds. Caring about one’s friends and maybe getting to [[c]]keep[[/c]] playing with the group leads to these actions.",
