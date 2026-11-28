@@ -57,6 +57,36 @@
 > 비밀번호는 정적 사이트의 화면 잠금일 뿐, 소스를 보면 확인할 수 있습니다.
 > 성적 데이터는 기본적으로 **응시한 기기의 localStorage**에 저장됩니다.
 
+## 학생 명단 · 허용/차단 (세 사이트 공통)
+
+관리자 → **학생 명단** 탭에서 학생의 **이름 + 코드**를 등록합니다. 등록된 학생만 문제를 시작할 수 있고,
+세 사이트(10모 · 수능 · 9모)가 Supabase `public.allowed_students` 표 하나를 함께 씁니다.
+
+- 학생 화면: **학생 이름**과 **학생 코드**를 넣고 유형을 고른 뒤 시작. 명단에 없거나 차단된 학생은
+  “허용되지 않았거나 차단된 학생입니다. 원장님께 이름과 코드를 확인해 주세요.”라는 안내와 함께 막힙니다.
+- 저장된 답안(새로고침 복원)도 같은 확인을 거칩니다. 차단된 학생은 복원되지 않습니다.
+- `차단`은 삭제 대신 `active = false`로 두는 방식이라, 나중에 `허용`을 누르면 바로 되돌릴 수 있습니다.
+- 관리자 버튼(0609)은 학생 확인 없이 항상 열립니다.
+- 명단 표를 아직 만들지 않았거나 통신이 안 되면 학생을 막지 않고 그대로 진행합니다(사이트가 잠기지 않도록).
+
+처음 한 번 Supabase SQL Editor에서 아래 SQL을 실행하세요.
+
+```sql
+create table if not exists public.allowed_students (
+  id bigint generated always as identity primary key,
+  name text not null,
+  code text not null,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists allowed_students_name_code_uidx
+  on public.allowed_students (lower(btrim(name)), btrim(code));
+grant usage on schema public to anon;
+grant select, insert, update, delete on public.allowed_students to anon;
+grant usage, select on all sequences in schema public to anon;
+alter table public.allowed_students disable row level security;
+```
+
 ## Supabase 동기화 (선택)
 
 관리자 → 설정에서 URL·anon key를 넣으면 제출할 때마다 `quiz_results` 테이블로 전송되어

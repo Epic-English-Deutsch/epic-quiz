@@ -13,12 +13,136 @@
     name: "epic_quiz_g3_202609_name_v1",
     supa: "epic_quiz_g3_202609_supa_v1",
     adminOk: "epic_quiz_g3_202609_admin_ok",
-    draft: "epic_quiz_g3_202609_draft_v1"
+    draft: "epic_quiz_g3_202609_draft_v1",
+    code: "epic_quiz_g3_202609_code_v1"
   };
   /* Supabase quiz_results 행에서 이 사이트(2026년 9월 고3 모의고사) 기록임을 구분하는 값 */
   var EXAM_TAG = "2026_g3_09";
   var EXAM_LABEL = "2026 9모 고3 · ";
   var CIRCLE = ["①", "②", "③", "④", "⑤"];
+  /* ---------- 학생 명단(allowed_students): 세 사이트가 함께 쓰는 허용/차단 명단 ---------- */
+  var STUDENTS_TABLE = "allowed_students";
+  var BLOCK_MSG = "허용되지 않았거나 차단된 학생입니다. 원장님께 이름과 코드를 확인해 주세요.";
+  var STUDENTS_SQL = "create table if not exists public.allowed_students (\n"
+    + "  id bigint generated always as identity primary key,\n"
+    + "  name text not null,\n"
+    + "  code text not null,\n"
+    + "  active boolean not null default true,\n"
+    + "  created_at timestamptz not null default now()\n"
+    + ");\n"
+    + "create unique index if not exists allowed_students_name_code_uidx\n"
+    + "  on public.allowed_students (lower(btrim(name)), btrim(code));\n"
+    + "grant usage on schema public to anon;\n"
+    + "grant select, insert, update, delete on public.allowed_students to anon;\n"
+    + "grant usage, select on all sequences in schema public to anon;\n"
+    + "alter table public.allowed_students disable row level security;";
+
+  function studentsApi() {
+    var cfg = getSupa();
+    var base = (cfg.url || SUPABASE_URL).replace(/\/+$/, "") + "/rest/v1/" + STUDENTS_TABLE;
+    var key = cfg.key || "";
+    function req(query, opts) {
+      opts = opts || {};
+      if (!key) return Promise.reject({ kind: "nokey", message: "anon key 없음" });
+      var headers = { apikey: key, Authorization: "Bearer " + key };
+      if (opts.body != null) headers["Content-Type"] = "application/json";
+      if (opts.prefer) headers.Prefer = opts.prefer;
+      var init = { method: opts.method || "GET", headers: headers };
+      if (opts.body != null) init.body = JSON.stringify(opts.body);
+      var ctrl = (typeof AbortController !== "undefined") ? new AbortController() : null;
+      if (ctrl) init.signal = ctrl.signal;
+      var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, opts.timeout || 7000);
+      return fetch(base + (query || ""), init).then(function (r) {
+        return r.text().then(function (txt) {
+          var data = null;
+          try { data = txt ? JSON.parse(txt) : null; } catch (e0) { data = null; }
+          if (r.ok) return data;
+          var code = (data && data.code) || "";
+          var msg = (data && data.message) || ("HTTP " + r.status);
+          if (code === "23505" || r.status === 409) throw { kind: "dup", status: r.status, message: msg };
+          if (r.status === 404 || code === "PGRST205" || code === "42P01") throw { kind: "missing", status: r.status, message: msg };
+          if (r.status === 401 || r.status === 403 || code === "42501" || /permission denied/i.test(msg)) throw { kind: "denied_db", status: r.status, message: msg };
+          throw { kind: "error", status: r.status, message: msg };
+        });
+      }).catch(function (e) {
+        if (e && e.kind) throw e;
+        throw { kind: "network", status: 0, message: (e && e.name === "AbortError") ? "응답 없음(시간 초과)" : ((e && e.message) || "네트워크 오류") };
+      }).then(function (v) { clearTimeout(timer); return v; }, function (e) { clearTimeout(timer); throw e; });
+    }
+    return {
+      list: function () {
+        return req("?select=id,name,code,active,created_at&order=created_at.asc", { timeout: 9000 }).then(function (rows) {
+          return Array.isArray(rows) ? rows : [];
+        });
+      },
+      find: function (name, code) {
+        var q = "?select=id,name,code,active&name=eq." + encodeURIComponent(name) + "&code=eq." + encodeURIComponent(code) + "&limit=10";
+        return req(q, { timeout: 6000 }).then(function (rows) {
+          var list = Array.isArray(rows) ? rows : [];
+          var hit = null;
+          list.forEach(function (r) {
+            var same = String(r.name == null ? "" : r.name).trim() === name && String(r.code == null ? "" : r.code).trim() === code;
+            if (!same) return;
+            if (!hit || (r.active === true && hit.active !== true)) hit = r;
+          });
+          if (!hit) return { status: "unknown" };
+          return { status: hit.active === true ? "ok" : "blocked", row: hit };
+        });
+      },
+      add: function (name, code) {
+        return req("", { method: "POST", body: { name: name, code: code, active: true }, prefer: "return=representation" });
+      },
+      setActive: function (id, active) {
+        return req("?id=eq." + encodeURIComponent(id), { method: "PATCH", body: { active: !!active }, prefer: "return=representation" });
+      },
+      remove: function (id) {
+        return req("?id=eq." + encodeURIComponent(id), { method: "DELETE", prefer: "return=minimal" });
+      }
+    };
+  }
+
+  function studentsProblemText(e) {
+    if (!e) return "";
+    if (e.kind === "missing") return "학생 명단 표(public.allowed_students)가 아직 Supabase에 없습니다. 아래 SQL을 Supabase SQL Editor에서 한 번 실행해 주세요.";
+    if (e.kind === "denied_db") return "학생 명단 표에 접근 권한이 없습니다(42501 permission denied). 아래 SQL의 grant 문을 실행해 주세요.";
+    if (e.kind === "nokey") return "Supabase anon key가 없어 학생 명단을 사용할 수 없습니다. [설정 · 동기화] 탭에서 키를 확인해 주세요.";
+    if (e.kind === "dup") return "같은 이름과 코드가 이미 명단에 있습니다.";
+    return "학생 명단을 불러오지 못했습니다 (" + String(e.message || "알 수 없는 오류") + ").";
+  }
+
+  /* 학생 확인 후 진입. status: ok / blocked / unknown / unavailable / invalid */
+  function verifyStudent(name, code, cb) {
+    name = String(name == null ? "" : name).trim();
+    code = String(code == null ? "" : code).trim();
+    if (!name) { toast("학생 이름을 입력해 주세요."); cb({ status: "invalid" }); return; }
+    if (!code) { toast("학생 코드를 입력해 주세요."); cb({ status: "invalid" }); return; }
+    studentsApi().find(name, code).then(cb).catch(function (e) {
+      cb({ status: "unavailable", error: e });
+    });
+  }
+
+  function setBlocked(msg) {
+    state.blocked = msg || "";
+    if (msg) toast(msg);
+  }
+
+  /* 명단을 확인할 수 없을 때(표가 아직 없거나 통신 실패)는 학생을 막지 않는다.
+     원장님이 SQL을 실행하기 전에 사이트가 잠기지 않도록. */
+  function gatePassMessage() {
+    return "학생 명단을 확인하지 못해 그대로 진행합니다.";
+  }
+
+  function beginQuizFlow() {
+    if (!state.cat) { toast("문제 유형을 선택해 주세요."); return; }
+    if (state.draft && Object.keys(cleanAnswers(state.draft.answers)).length) {
+      if (!window.confirm("저장된 답안이 있습니다. 새로 시작하면 저장된 답안이 지워집니다. 새로 시작할까요?")) {
+        toast("위의 ‘이어서 풀기’를 누르면 저장된 답안으로 이어집니다.");
+        return;
+      }
+    }
+    startQuiz(state.cat);
+  }
+
 
   /* ---------- utils ---------- */
   function esc(s) {
@@ -225,6 +349,7 @@
       locked: locked,
       retryOriginScore: origin,
       name: typeof d.name === "string" ? d.name : "",
+      code: typeof d.code === "string" ? d.code : "",
       elapsed: Math.max(0, Number(d.elapsed) || 0),
       updatedAt: typeof d.updatedAt === "string" ? d.updatedAt : ""
     };
@@ -250,6 +375,7 @@
       retryLock: { keys: retryKeys, locked: locked },
       retryOriginScore: state.retryOriginScore || null,
       name: state.name || "",
+      code: state.code || "",
       elapsed: Math.round(state.elapsed || 0),
       updatedAt: new Date().toISOString()
     };
@@ -272,6 +398,7 @@
     state.retryOriginScore = d.retryOriginScore || null;
     state.result = null;
     if (d.name) state.name = d.name;
+    if (d.code) state.code = d.code;
     state.draft = d;
     state.view = "quiz";
     window.scrollTo(0, 0);
@@ -408,6 +535,8 @@
   var state = {
     view: "login",
     name: localStorage.getItem(KEYS.name) || "",
+    code: localStorage.getItem(KEYS.code) || "",
+    blocked: "",
     cat: null,
     ids: [],
     idx: 0,
@@ -454,6 +583,9 @@
   function viewLogin() {
     var m = DATA.meta || {};
     var draftHTML = draftBannerHTML();
+    var blockedHTML = state.blocked
+      ? '<div class="notice bad" role="alert" style="margin-top:14px;font-weight:700">' + esc(state.blocked) + "</div>"
+      : "";
     var cats = DATA.categories.map(function (c) {
       var n = itemsByCat(c.id).length;
       return '<button class="cat" data-act="pick-cat" data-cat="' + c.id + '" aria-pressed="' + (state.cat === c.id) + '">' +
@@ -467,10 +599,15 @@
         "<h1>" + esc(m.subject || "영어 변형문제") + "</h1>" +
         "<p>" + esc((m.range || "29~42번") + " 지문으로 만든 어법·독해 변형문제") + "</p>" +
       "</section>" +
+      blockedHTML +
       draftHTML +
       '<section class="card pad" style="margin-top:18px">' +
-        '<div class="field"><label for="nm">학생 이름</label>' +
-          '<input id="nm" class="input" type="text" maxlength="20" placeholder="이름을 입력하세요" value="' + esc(state.name) + '" autocomplete="off"></div>' +
+        '<div class="field-row">' +
+          '<div class="field"><label for="nm">학생 이름</label>' +
+            '<input id="nm" class="input" type="text" maxlength="20" placeholder="이름" value="' + esc(state.name) + '" autocomplete="off"></div>' +
+          '<div class="field"><label for="cd">학생 코드</label>' +
+            '<input id="cd" class="input" type="text" maxlength="20" placeholder="코드" value="' + esc(state.code) + '" autocomplete="off"></div>' +
+        '</div>' +
         '<div class="field"><label>문제 유형 선택</label><div class="cat-list">' + cats + "</div></div>" +
         '<button class="btn primary block" data-act="start" style="margin-top:8px">문제 풀기 시작</button>' +
         '<div class="notice">점수와 오답 기록은 이 기기에 저장되며, 관리자(선생님) 화면에서 확인할 수 있습니다. ' +
@@ -965,6 +1102,7 @@
       "</div>" +
       '<div class="tabs">' +
         '<button data-act="admin-tab" data-tab="records" class="' + (tab === "records" ? "on" : "") + '">학생 기록</button>' +
+        '<button data-act="admin-tab" data-tab="students" class="' + (tab === "students" ? "on" : "") + '">학생 명단</button>' +
         '<button data-act="admin-tab" data-tab="accuracy" class="' + (tab === "accuracy" ? "on" : "") + '">문항별 정답률</button>' +
         '<button data-act="admin-tab" data-tab="settings" class="' + (tab === "settings" ? "on" : "") + '">설정 · 동기화</button>' +
       "</div>";
@@ -976,6 +1114,11 @@
         '<button class="btn danger" data-act="clear-records">기록 전체 삭제</button>' +
       "</div>";
       out += recs.length ? recs.map(studentRow).join("") : '<div class="empty">아직 제출된 기록이 없습니다.<br>학생이 문제를 풀고 ‘채점하기’를 누르면 여기에 표시됩니다.</div>';
+    } else if (tab === "students") {
+      if (!state.admin.stu || (!state.admin.stu.rows && !state.admin.stu.error && !state.admin.stu.loading)) {
+        setTimeout(function () { loadStudents(true); }, 0);
+      }
+      out += studentsPanel();
     } else if (tab === "accuracy") {
       out += accuracyTable(full);
     } else {
@@ -1044,6 +1187,71 @@
     return head + '<div style="overflow:auto;max-height:56vh"><table><thead><tr><th>문항</th><th>지문 / 유형</th><th>응답</th><th>정답률</th><th></th></tr></thead><tbody>' +
       body + "</tbody></table></div>" +
       '<div class="hint-inline" style="margin-top:8px">학생별 ‘전체 풀이’ 기록만 집계합니다(오답 재풀이 제외).</div>';
+  }
+
+  /* ---------- admin: 학생 명단 ---------- */
+  function adminStu() {
+    if (!state.admin.stu) state.admin.stu = { rows: null, loading: false, error: null, name: "", code: "" };
+    return state.admin.stu;
+  }
+  function renderAdminStu() {
+    var b = $("#adminBody");
+    if (b) b.innerHTML = adminBody();
+  }
+  function loadStudents(force) {
+    var s = adminStu();
+    if (s.loading) return;
+    if (!force && s.rows) return;
+    s.loading = true;
+    s.error = null;
+    renderAdminStu();
+    studentsApi().list().then(function (rows) {
+      s.rows = rows; s.loading = false; s.error = null; renderAdminStu();
+    }).catch(function (e) {
+      s.rows = null; s.loading = false; s.error = e; renderAdminStu();
+    });
+  }
+  function studentsPanel() {
+    var s = adminStu();
+    var rows = s.rows || [];
+    var on = rows.filter(function (r) { return r.active === true; }).length;
+    var off = rows.length - on;
+    var out = '<div class="notice" style="margin:0 0 12px">학생 명단은 <b>세 사이트(2026 10모 · 2026 수능 · 2026 9모)</b>가 같은 표를 함께 씁니다. 여기서 추가·차단하면 세 사이트에 바로 적용되고, 명단에 없거나 차단된 학생은 문제를 시작할 수 없습니다.</div>';
+    out += '<div class="stu-add">' +
+      '<input id="stuNm" class="input" type="text" maxlength="20" placeholder="학생 이름" value="' + esc(s.name) + '" autocomplete="off">' +
+      '<input id="stuCd" class="input" type="text" maxlength="20" placeholder="학생 코드" value="' + esc(s.code) + '" autocomplete="off">' +
+      '<button class="btn primary" data-act="stu-add">추가</button></div>';
+    out += '<div class="toolbar"><button class="btn" data-act="stu-refresh">새로고침</button>' +
+      (rows.length ? '<span class="hint-inline" style="align-self:center">전체 <b>' + rows.length + '</b>명 · 허용 <b>' + on + '</b>명 · 차단 <b>' + off + '</b>명</span>' : "") +
+      "</div>";
+    if (s.error) {
+      out += '<div class="notice bad">' + esc(studentsProblemText(s.error)) + "</div>";
+      if (s.error.kind === "missing" || s.error.kind === "denied_db" || s.error.kind === "nokey") {
+        out += '<div class="notice"><b>Supabase SQL Editor에서 아래 SQL을 한 번 실행해 주세요.</b>' +
+          '<code style="font-size:11px;display:block;white-space:pre-wrap;background:#f3f4f8;padding:8px;border-radius:8px;margin-top:8px">' + esc(STUDENTS_SQL) + "</code></div>";
+      }
+      return out;
+    }
+    if (!rows.length) {
+      return out + '<div class="empty">' + (s.loading
+        ? "학생 명단을 불러오는 중…"
+        : "명단에 등록된 학생이 없습니다.<br>위에서 이름과 코드를 넣고 [추가]를 누르면, 그 학생만 문제를 시작할 수 있습니다.") + "</div>";
+    }
+    var sorted = rows.slice().sort(function (a, b) {
+      var aa = a.active === true ? 0 : 1, bb = b.active === true ? 0 : 1;
+      if (aa !== bb) return aa - bb;
+      return String(a.name || "").localeCompare(String(b.name || ""), "ko");
+    });
+    out += '<div class="stu-list">' + sorted.map(function (r) {
+      var act = r.active === true;
+      return '<div class="stu-item' + (act ? "" : " off") + '">' +
+        '<div class="who"><b>' + esc(r.name) + '</b><span class="cd">코드 ' + esc(r.code) + "</span></div>" +
+        '<span class="state ' + (act ? "on" : "off") + '">' + (act ? "허용 중" : "차단됨") + "</span>" +
+        '<button class="btn" data-act="stu-toggle" data-id="' + esc(r.id) + '" data-active="' + (act ? "false" : "true") + '">' + (act ? "차단" : "허용") + "</button>" +
+        '<button class="btn danger" data-act="stu-del" data-id="' + esc(r.id) + '" data-name="' + esc(r.name) + '">삭제</button>' +
+        "</div>";
+    }).join("") + "</div>";
+    return out;
   }
 
   function settingsPanel() {
@@ -1120,20 +1328,27 @@
         state.cat = t.getAttribute("data-cat");
         render();
         break;
-      case "start":
+      case "start": {
         var nm = ($("#nm") || {}).value || "";
+        var cdv = ($("#cd") || {}).value || "";
         state.name = nm.trim();
-        if (!state.name) { toast("이름을 입력해 주세요."); var i = $("#nm"); if (i) i.focus(); return; }
-        try { localStorage.setItem(KEYS.name, state.name); } catch (err) {}
+        state.code = cdv.trim();
+        state.blocked = "";
+        if (!state.name) { toast("이름을 입력해 주세요."); var i0 = $("#nm"); if (i0) i0.focus(); return; }
+        if (!state.code) { toast("학생 코드를 입력해 주세요."); var i1 = $("#cd"); if (i1) i1.focus(); return; }
+        try { localStorage.setItem(KEYS.name, state.name); localStorage.setItem(KEYS.code, state.code); } catch (err) {}
         if (!state.cat) { toast("문제 유형을 선택해 주세요."); return; }
-        if (state.draft && Object.keys(cleanAnswers(state.draft.answers)).length) {
-          if (!window.confirm("저장된 답안이 있습니다. 새로 시작하면 저장된 답안이 지워집니다. 새로 시작할까요?")) {
-            toast("위의 ‘이어서 풀기’를 누르면 저장된 답안으로 이어집니다.");
-            return;
-          }
-        }
-        startQuiz(state.cat);
+        var startBtn = t;
+        if (startBtn) startBtn.disabled = true;
+        verifyStudent(state.name, state.code, function (res) {
+          if (startBtn) startBtn.disabled = false;
+          if (res.status === "invalid") return;
+          if (res.status === "unavailable") { toast(gatePassMessage()); beginQuizFlow(); return; }
+          if (res.status !== "ok") { setBlocked(BLOCK_MSG); render(); return; }
+          beginQuizFlow();
+        });
         break;
+      }
       case "pick":
         e.stopPropagation();
         var unit = t.getAttribute("data-unit");
@@ -1168,9 +1383,33 @@
       case "retry-wrong":
         retryWrong();
         break;
-      case "resume":
-        if (state.draft) restoreDraft(state.draft);
+      case "resume": {
+        if (!state.draft) break;
+        var rn = (($("#nm") || {}).value || state.name || "").trim();
+        var rc = (($("#cd") || {}).value || state.code || "").trim();
+        var dName = String(state.draft.name || "").trim();
+        if (dName && rn && dName !== rn) {
+          toast("저장된 답안은 ‘" + dName + "’ 학생의 것입니다. 이름을 확인해 주세요.");
+          return;
+        }
+        state.name = rn; state.code = rc; state.blocked = "";
+        try { localStorage.setItem(KEYS.name, rn); localStorage.setItem(KEYS.code, rc); } catch (err2) {}
+        var resBtn = t;
+        if (resBtn) resBtn.disabled = true;
+        verifyStudent(rn, rc, function (res) {
+          if (resBtn) resBtn.disabled = false;
+          if (res.status === "invalid") return;
+          if (res.status === "unavailable") toast(gatePassMessage());
+          if (res.status === "ok" || res.status === "unavailable") {
+            if (state.draft) restoreDraft(state.draft);
+            return;
+          }
+          clearDraft();
+          setBlocked(BLOCK_MSG);
+          render();
+        });
         break;
+      }
       case "discard-draft":
         if (window.confirm("저장된 답안을 지울까요? 되돌릴 수 없습니다.")) {
           clearDraft();
@@ -1178,9 +1417,21 @@
           toast("저장된 답안을 지웠습니다.");
         }
         break;
-      case "retry-all":
-        startQuiz(state.cat);
+      case "retry-all": {
+        if (!state.name || !state.code) { startQuiz(state.cat); break; }
+        var raBtn = t;
+        if (raBtn) raBtn.disabled = true;
+        verifyStudent(state.name, state.code, function (res) {
+          if (raBtn) raBtn.disabled = false;
+          if (res.status === "invalid") return;
+          if (res.status === "unavailable") toast(gatePassMessage());
+          if (res.status === "ok" || res.status === "unavailable") { startQuiz(state.cat); return; }
+          setBlocked(BLOCK_MSG);
+          state.view = "login";
+          render();
+        });
         break;
+      }
       case "home":
         stopTimer();
         saveDraft();
@@ -1207,6 +1458,64 @@
         state.admin.sort = t.getAttribute("data-sort");
         refreshAdmin();
         break;
+      case "stu-add": {
+        var sa = adminStu();
+        var nn1 = (($("#stuNm") || {}).value || "").trim();
+        var cc1 = (($("#stuCd") || {}).value || "").trim();
+        sa.name = nn1; sa.code = cc1;
+        if (!nn1) { toast("학생 이름을 입력해 주세요."); var e1 = $("#stuNm"); if (e1) e1.focus(); return; }
+        if (!cc1) { toast("학생 코드를 입력해 주세요."); var e2 = $("#stuCd"); if (e2) e2.focus(); return; }
+        var dupRow = (sa.rows || []).filter(function (r) {
+          return String(r.name == null ? "" : r.name).trim() === nn1 && String(r.code == null ? "" : r.code).trim() === cc1;
+        })[0];
+        if (dupRow) { toast("이미 명단에 있는 학생입니다. (" + nn1 + " · " + cc1 + ")"); return; }
+        t.disabled = true;
+        studentsApi().add(nn1, cc1).then(function () {
+          t.disabled = false;
+          sa.name = ""; sa.code = "";
+          toast("명단에 추가했습니다 · " + nn1 + " (" + cc1 + ")");
+          loadStudents(true);
+        }).catch(function (err) {
+          t.disabled = false;
+          toast(studentsProblemText(err));
+          if (err && (err.kind === "missing" || err.kind === "denied_db" || err.kind === "nokey" || err.kind === "dup")) {
+            if (err.kind === "dup") loadStudents(true);
+            else { sa.error = err; renderAdminStu(); }
+          }
+        });
+        break;
+      }
+      case "stu-refresh":
+        toast("학생 명단을 새로 불러옵니다…");
+        loadStudents(true);
+        break;
+      case "stu-toggle": {
+        var sid = t.getAttribute("data-id");
+        var wantActive = t.getAttribute("data-active") === "true";
+        t.disabled = true;
+        studentsApi().setActive(sid, wantActive).then(function () {
+          toast(wantActive ? "이 학생을 다시 허용했습니다." : "이 학생을 차단했습니다.");
+          loadStudents(true);
+        }).catch(function (err) {
+          t.disabled = false;
+          toast(studentsProblemText(err));
+        });
+        break;
+      }
+      case "stu-del": {
+        var delId = t.getAttribute("data-id");
+        var delName = t.getAttribute("data-name") || "";
+        if (!window.confirm("‘" + delName + "’ 학생을 명단에서 삭제할까요? 삭제하면 이 학생은 문제를 시작할 수 없습니다.")) return;
+        t.disabled = true;
+        studentsApi().remove(delId).then(function () {
+          toast("명단에서 삭제했습니다.");
+          loadStudents(true);
+        }).catch(function (err) {
+          t.disabled = false;
+          toast(studentsProblemText(err));
+        });
+        break;
+      }
       case "refresh":
         refreshAdmin();
         toast("새로고침했습니다.");
@@ -1258,7 +1567,12 @@
 
   /* ---------- init ---------- */
   document.addEventListener("input", function (e) {
-    if (e.target && e.target.id === "nm") state.name = e.target.value;
+    if (!e.target) return;
+    var id = e.target.id;
+    if (id === "nm") state.name = e.target.value;
+    else if (id === "cd") state.code = e.target.value;
+    else if (id === "stuNm") adminStu().name = e.target.value;
+    else if (id === "stuCd") adminStu().code = e.target.value;
   });
 
   function init() {
@@ -1268,8 +1582,29 @@
     }
     if (state.cat == null) state.cat = "grammar";
     var d = loadDraft();
-    if (d) { restoreDraft(d); return; }
     render();
+    if (!d) return;
+    /* 저장된 답안도 명단을 다시 확인한 뒤 연다.
+       차단되었거나 명단에 없으면 답안을 지우고 막는다(새로고침으로 우회 방지). */
+    var dn = String(d.name || state.name || "").trim();
+    var dc = String(d.code || state.code || "").trim();
+    if (!dn || !dc) {
+      toast("저장된 답안이 있습니다. 이름과 학생 코드를 입력하고 ‘이어서 풀기’를 눌러 주세요.");
+      return;
+    }
+    verifyStudent(dn, dc, function (res) {
+      if (res.status === "invalid") return;
+      if (res.status === "ok" || res.status === "unavailable") {
+        state.name = dn; state.code = dc;
+        if (res.status === "unavailable") toast(gatePassMessage());
+        restoreDraft(d);
+        return;
+      }
+      clearDraft();
+      state.name = dn; state.code = dc;
+      setBlocked(BLOCK_MSG);
+      render();
+    });
   }
   document.addEventListener("DOMContentLoaded", init);
   if (document.readyState !== "loading") init();
