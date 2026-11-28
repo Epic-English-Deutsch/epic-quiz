@@ -6,6 +6,16 @@
 - 지문 출처: EBSi 공식 문제지·정답 및 해설 (2026학년도 10월 고2 전국연합학력평가 영어 영역)
 - 문항: 3개 유형 · 지문 13편(41·42번은 공통 지문) 기준
 
+## 2026학년도 수능 영어 (홀수형) 29~42번 · `csat-2026/`
+
+같은 앱 구조로 만든 별도 사이트입니다. 루트 주소는 그대로 10모 사이트이고, 수능판은 아래 주소로 열립니다.
+
+- 미리보기: https://raw.githack.com/Epic-English-Deutsch/epic-quiz/main/csat-2026/index.html
+- GitHub Pages: https://epic-english-deutsch.github.io/epic-quiz/csat-2026/ (Settings → Pages 활성화 후)
+- 지문 출처: 2026학년도 대학수학능력시험 영어 영역 홀수형 문제지(한국교육과정평가원)
+- 문항: 어법 양자택일 14세트·84빈칸 / 객관식 변형 14문항 / 빈칸 객관식 14문항
+- 기록 키: `epic_quiz_csat2026_*` (10모 기록과 분리), Supabase 행은 category `2026수능(홀수형) · <유형>` + answers `_exam` 태그
+
 ## 구성
 
 | 유형 | 내용 | 문항 수 |
@@ -65,6 +75,7 @@ data/grammar-b.js   36~42번 어법 양자택일
 data/multiple-a.js  29~35번 객관식 변형
 data/multiple-b.js  36~42번 객관식 변형
 data/cloze.js       29~42번 빈칸 객관식
+csat-2026/          같은 구조의 2026 수능 영어 (홀수형) 29~42번 사이트
 ```
 
 ## 문항 수정 방법

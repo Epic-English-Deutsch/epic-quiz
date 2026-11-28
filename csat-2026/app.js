@@ -236,6 +236,7 @@
         var added = 0;
         (rows || []).forEach(function (row) {
           var ans = row.answers || {};
+          if (ans._exam !== EXAM_TAG) return;   // 다른 시험(2026 10모 등) 기록은 이 사이트 관리자에 섮지 않음
           if (sids[String(row.id)]) return;
           if (ans._rid && rids[ans._rid]) return;
           var units = (row.wrong_items || []).map(function (w) {
