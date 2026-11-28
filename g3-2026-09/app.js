@@ -663,7 +663,7 @@
     var root = $("#printRoot");
     var meta = DATA.meta || {};
     var now = new Date();
-    var head = '<div class="p-head"><h1>' + esc(meta.school + " " + meta.subject) + "</h1>" +
+    var head = '<div class="p-head"><h1>' + esc(meta.title || (meta.school + " " + meta.subject)) + "</h1>" +
       '<div class="sub">' + esc(meta.range) + " · " + (mode === "key" ? "해설지" : mode === "report" ? "성적표" : "학생용 문제지") + "</div>" +
       '<div class="p-info"><span>이름: ' + (mode === "report" ? esc(state.name || "") : "________________") + "</span>" +
       "<span>날짜: " + now.getFullYear() + "." + pad(now.getMonth() + 1) + "." + pad(now.getDate()) + "</span>" +
